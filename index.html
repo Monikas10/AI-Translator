@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Translator</title>
+<style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+        color: #e2e8f0;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    h1 {
+        text-align: center;
+        color: #38bdf8;
+        margin-bottom: 4px;
+    }
+    .subtitle {
+        text-align: center;
+        color: #94a3b8;
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+    form {
+        background: #1e293b;
+        padding: 22px;
+        border-radius: 14px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+    }
+    label {
+        display: block;
+        margin-top: 14px;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #94a3b8;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .lang-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 4px;
+    }
+    .lang-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 14px;
+        font-weight: normal;
+        text-transform: none;
+        letter-spacing: normal;
+        cursor: pointer;
+        color: #e2e8f0;
+    }
+    .lang-option input { width: auto; }
+    .textarea-wrap {
+        position: relative;
+    }
+    .field-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 6px;
+    }
+    #charCount {
+        font-size: 11px;
+        color: #64748b;
+    }
+    #clearBtn {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 12px;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 0;
+    }
+    #clearBtn:hover { color: #e2e8f0; }
+    textarea, input, select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #e2e8f0;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+    textarea {
+        resize: vertical;
+        padding-right: 46px;
+    }
+    #micBtn {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: none;
+        background: #334155;
+        color: #e2e8f0;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    #micBtn:hover { background: #475569; }
+    #micBtn.recording {
+        background: #ef4444;
+        animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+        70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+        100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    }
+    #voiceStatus {
+        font-size: 12px;
+        color: #f87171;
+        margin-top: 6px;
+        min-height: 16px;
+    }
+    button[type="submit"] {
+        margin-top: 18px;
+        width: 100%;
+        padding: 13px;
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: background 0.2s;
+    }
+    button[type="submit"]:hover { background: #0ea5e9; }
+    button[type="submit"]:disabled {
+        background: #475569;
+        cursor: not-allowed;
+        color: #cbd5e1;
+    }
+    .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(15,23,42,0.4);
+        border-top-color: #0f172a;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .card-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+    }
+    .card-actions button {
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: #94a3b8;
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    .card-actions button:hover { color: #e2e8f0; border-color: #64748b; }
+    #historySection {
+        margin-top: 30px;
+    }
+    #historySection .results-header h2 { font-size: 16px; }
+    #clearHistoryBtn {
+        background: none;
+        border: none;
+        color: #f87171;
+        font-size: 12px;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    .history-item {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #94a3b8;
+    }
+    .history-item strong { color: #e2e8f0; }
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .results-header h2 { margin: 0; }
+    #downloadBtn {
+        background: #22c55e;
+        color: #052e16;
+        border: none;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    #downloadBtn:hover { background: #16a34a; }
+    .result-card {
+        background: #1e293b;
+        border-left: 4px solid #38bdf8;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+    .result-lang {
+        color: #38bdf8;
+        font-weight: bold;
+        margin-bottom: 6px;
+    }
+    .result-text { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<h1>AI Translator</h1>
+<div class="subtitle">Speak or type, pick a tone, and get instant multi-language translations</div>
+
+<form method="POST" id="translateForm">
+    <label>Text to translate</label>
+    <div class="textarea-wrap">
+        <textarea name="text" id="textInput" rows="4" placeholder="Type here, or tap the mic to speak...">{{ original_text }}</textarea>
+        <button type="button" id="micBtn" title="Speak to fill this box">🎤</button>
+    </div>
+    <div class="field-footer">
+        <span id="charCount">0 / 500 characters</span>
+        <button type="button" id="clearBtn">Clear form</button>
+    </div>
+    <div id="voiceStatus"></div>
+
+    <label>Target language(s)</label>
+    <div class="lang-grid">
+        {% for lang in common_languages %}
+        <label class="lang-option">
+            <input type="checkbox" name="languages" value="{{ lang }}" {% if lang in selected_languages %}checked{% endif %}>
+            {{ lang }}
+        </label>
+        {% endfor %}
+    </div>
+    <input type="text" name="custom_languages" placeholder="Other language(s), comma separated (optional)" value="{{ custom_languages }}" style="margin-top:8px;">
+
+    <label>Tone / Style</label>
+    <select name="tone">
+        {% for tone in tone_options %}
+        <option value="{{ tone }}" {% if tone == selected_tone %}selected{% endif %}>{{ tone }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Translate</button>
+</form>
+
+{% if results %}
+<div class="results-header">
+    <h2>Results</h2>
+    <button id="downloadBtn" type="button">⬇ Download Report</button>
+</div>
+<div id="resultsBlock"
+     data-original="{{ original_text | e }}"
+     data-tone="{{ selected_tone | e }}">
+{% for lang, translated in results.items() %}
+<div class="result-card" data-lang="{{ lang | e }}">
+    <div class="result-lang">{{ lang }}</div>
+    <div class="result-text">{{ translated }}</div>
+    <div class="card-actions">
+        <button type="button" class="copyBtn">📋 Copy</button>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<div id="historySection" style="display:none;">
+    <div class="results-header">
+        <h2>Recent Translations (this browser)</h2>
+        <button id="clearHistoryBtn" type="button">Clear history</button>
+    </div>
+    <div id="historyList"></div>
+</div>
+
+<script>
+// ---------------- Voice input (Web Speech API) ----------------
+const micBtn = document.getElementById('micBtn');
+const textInput = document.getElementById('textInput');
+const voiceStatus = document.getElementById('voiceStatus');
+const translateForm = document.getElementById('translateForm');
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognitionAPI) {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    let isRecording = false;
+
+    micBtn.addEventListener('click', () => {
+        if (isRecording) {
+            recognition.stop();
+            return;
+        }
+        textInput.value = '';
+        voiceStatus.textContent = 'Listening... speak now';
+        micBtn.classList.add('recording');
+        isRecording = true;
+        recognition.start();
+    });
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        textInput.value = transcript;
+        voiceStatus.textContent = 'Captured — translating automatically...';
+    };
+
+    recognition.onerror = (event) => {
+        voiceStatus.textContent = 'Voice input error: ' + event.error;
+        micBtn.classList.remove('recording');
+        isRecording = false;
+    };
+
+    // Recognition stops automatically once the user stops speaking (or on manual stop).
+    recognition.onend = () => {
+        micBtn.classList.remove('recording');
+        isRecording = false;
+        if (textInput.value.trim().length > 0) {
+            // Automatically submit the form so recording -> translation happens in one step.
+            translateForm.submit();
+        } else {
+            voiceStatus.textContent = 'No speech detected — try again.';
+        }
+    };
+} else {
+    micBtn.style.display = 'none';
+}
+
+// ---------------- Character counter ----------------
+const charCount = document.getElementById('charCount');
+const MAX_CHARS = 500;
+function updateCharCount() {
+    const len = textInput.value.length;
+    charCount.textContent = len + ' / ' + MAX_CHARS + ' characters';
+    charCount.style.color = len > MAX_CHARS ? '#f87171' : '#64748b';
+}
+textInput.addEventListener('input', updateCharCount);
+updateCharCount();
+
+// ---------------- Clear form ----------------
+document.getElementById('clearBtn').addEventListener('click', () => {
+    textInput.value = '';
+    document.querySelectorAll('input[name="languages"]').forEach(cb => cb.checked = false);
+    document.querySelector('input[name="custom_languages"]').value = '';
+    updateCharCount();
+    voiceStatus.textContent = '';
+});
+
+// ---------------- Loading spinner on submit ----------------
+translateForm.addEventListener('submit', () => {
+    const btn = translateForm.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Translating...';
+});
+
+// ---------------- Copy button on result cards ----------------
+document.querySelectorAll('.copyBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const text = btn.closest('.result-card').querySelector('.result-text').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const original = btn.textContent;
+            btn.textContent = '✅ Copied';
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        });
+    });
+});
+
+// ---------------- Session history (stored in this browser only) ----------------
+const HISTORY_KEY = 'ai_translator_history';
+
+function loadHistory() {
+    try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveHistoryEntry(entry) {
+    const history = loadHistory();
+    history.unshift(entry);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 10)));
+}
+
+function renderHistory() {
+    const history = loadHistory();
+    const historySection = document.getElementById('historySection');
+    const historyList = document.getElementById('historyList');
+    if (history.length === 0) {
+        historySection.style.display = 'none';
+        return;
+    }
+    historySection.style.display = 'block';
+    historyList.innerHTML = '';
+    history.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = '<strong>' + item.languages.join(', ') + '</strong> (' + item.tone + ') — ' + item.text.slice(0, 60) + (item.text.length > 60 ? '...' : '');
+        historyList.appendChild(div);
+    });
+}
+
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+});
+
+// If this page load is showing results, save this translation into history.
+const resultsBlockEl = document.getElementById('resultsBlock');
+if (resultsBlockEl) {
+    const langs = Array.from(resultsBlockEl.querySelectorAll('.result-card')).map(c => c.getAttribute('data-lang'));
+    saveHistoryEntry({
+        text: resultsBlockEl.getAttribute('data-original'),
+        tone: resultsBlockEl.getAttribute('data-tone'),
+        languages: langs
+    });
+}
+renderHistory();
+
+const downloadBtn = document.getElementById('downloadBtn');
+if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+        const block = document.getElementById('resultsBlock');
+        const original = block.getAttribute('data-original');
+        const tone = block.getAttribute('data-tone');
+        const cards = block.querySelectorAll('.result-card');
+
+        let report = 'AI TRANSLATOR — REPORT\n';
+        report += '========================\n\n';
+        report += 'Original Text:\n' + original + '\n\n';
+        report += 'Tone Used: ' + tone + '\n\n';
+        report += '------------------------\n';
+
+        cards.forEach(card => {
+            const lang = card.getAttribute('data-lang');
+            const text = card.querySelector('.result-text').innerText;
+            report += '\n[' + lang + ']\n' + text + '\n';
+        });
+
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'translation_report.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+}
+</script>
+
+</body>
+</html>
